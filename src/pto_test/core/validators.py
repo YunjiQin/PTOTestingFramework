@@ -108,7 +108,9 @@ class ResultValidator:
             max_abs_error=max_abs_error,
             max_rel_error=max_rel_error,
             mismatch_count=total_mismatch_count,
-            mismatch_indices=all_mismatch_indices[: self.max_mismatch_samples] if not passed else None,
+            mismatch_indices=(
+                all_mismatch_indices[: self.max_mismatch_samples] if not passed else None
+            ),
         )
 
     def _compare_arrays(

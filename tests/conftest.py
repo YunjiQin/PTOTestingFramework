@@ -141,6 +141,7 @@ def fuzz_seed(request) -> int:
     seed = request.config.getoption("--fuzz-seed")
     if seed is None:
         import random
+
         seed = random.randint(0, 2**31 - 1)
     return seed
 
@@ -165,12 +166,8 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "hardware: mark test as requiring hardware (--platform=a2a3)"
     )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow"
-    )
-    config.addinivalue_line(
-        "markers", "fuzz: mark test as fuzz test"
-    )
+    config.addinivalue_line("markers", "slow: mark test as slow")
+    config.addinivalue_line("markers", "fuzz: mark test as fuzz test")
 
 
 def pytest_collection_modifyitems(config, items):

@@ -92,11 +92,14 @@ class TestTileMul(PTOTestCase):
     def define_tensors(self) -> List[TensorSpec]:
         return [
             # 方式1: 使用 Callable 生成随机数据（每次运行不同）
-            TensorSpec("a", [self.rows, self.cols], DataType.FP32,
-                      init_value=lambda shape: np.random.randn(*shape)),
+            TensorSpec(
+                "a",
+                [self.rows, self.cols],
+                DataType.FP32,
+                init_value=lambda shape: np.random.randn(*shape),
+            ),
             # 方式2: 使用标量值（推荐 - 简单且可序列化）
-            TensorSpec("b", [self.rows, self.cols], DataType.FP32,
-                      init_value=3.0),
+            TensorSpec("b", [self.rows, self.cols], DataType.FP32, init_value=3.0),
             # 其他方式见 TestCustomArrayInit 类的示例：
             # - 小数组可以直接用 np.array([[...]])
             # - 单位矩阵用 np.eye(n)
@@ -133,7 +136,9 @@ class TestTileMul(PTOTestCase):
         temp3 = np.maximum(temp1 * temp2, 0)
 
         # 使用各种 NumPy 函数
-        result = np.sqrt(temp3 + tensors["a"]**2)  # 注意：这里改用tensors["a"]因为只有a,b,c三个tensor
+        result = np.sqrt(
+            temp3 + tensors["a"] ** 2
+        )  # 注意：这里改用tensors["a"]因为只有a,b,c三个tensor
         result = np.clip(result, -100, 100)
 
         # 条件逻辑
@@ -151,6 +156,7 @@ class TestTileAddWithPTOAS(TestTileAdd):
 
     def get_strategy(self):
         from pypto.ir.pass_manager import OptimizationStrategy
+
         return OptimizationStrategy.PTOAS
 
     def get_name(self) -> str:
@@ -166,19 +172,20 @@ class TestCustomArrayInit(PTOTestCase):
     def define_tensors(self) -> List[TensorSpec]:
         return [
             # 小数组: 自定义值（会被序列化）
-            TensorSpec("small", [3, 3], DataType.FP32,
-                      init_value=np.array([[1, 2, 3],
-                                          [4, 5, 6],
-                                          [7, 8, 9]], dtype=np.float32)),
+            TensorSpec(
+                "small",
+                [3, 3],
+                DataType.FP32,
+                init_value=np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32),
+            ),
             # 单位矩阵
-            TensorSpec("identity", [4, 4], DataType.FP32,
-                      init_value=np.eye(4, dtype=np.float32)),
+            TensorSpec("identity", [4, 4], DataType.FP32, init_value=np.eye(4, dtype=np.float32)),
             # 常数数组（会被优化为 np.full）
-            TensorSpec("constant", [5, 5], DataType.FP32,
-                      init_value=np.ones((5, 5)) * 3.14),
+            TensorSpec("constant", [5, 5], DataType.FP32, init_value=np.ones((5, 5)) * 3.14),
             # 对角矩阵（小数组会序列化）
-            TensorSpec("diagonal", [3, 3], DataType.FP32,
-                      init_value=np.diag([1, 2, 3]).astype(np.float32)),
+            TensorSpec(
+                "diagonal", [3, 3], DataType.FP32, init_value=np.diag([1, 2, 3]).astype(np.float32)
+            ),
             # 输出
             TensorSpec("out", [3, 3], DataType.FP32, is_output=True),
         ]
@@ -195,6 +202,7 @@ class TestCustomArrayInit(PTOTestCase):
 # =============================================================================
 # pytest test functions
 # =============================================================================
+
 
 class TestElementwiseOperations:
     """Test suite for elementwise operations."""
