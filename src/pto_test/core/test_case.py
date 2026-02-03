@@ -8,7 +8,7 @@ executed on both simulation and hardware platforms.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -261,6 +261,7 @@ class PTOTestCase(ABC):
             OptimizationStrategy enum value.
         """
         from pypto.ir.pass_manager import OptimizationStrategy
+
         return OptimizationStrategy.Default
 
     def get_orchestration(self) -> Optional[str]:
@@ -279,7 +280,9 @@ class PTOTestCase(ABC):
         return None
 
     @abstractmethod
-    def compute_expected(self, tensors: Dict[str, np.ndarray], params: Optional[Dict[str, Any]] = None) -> None:
+    def compute_expected(
+        self, tensors: Dict[str, np.ndarray], params: Optional[Dict[str, Any]] = None
+    ) -> None:
         """Compute expected outputs using NumPy (modifies tensors in-place).
 
         This method should compute the expected outputs and write them directly

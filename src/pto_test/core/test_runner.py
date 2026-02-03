@@ -104,10 +104,10 @@ class TestRunner:
 
         try:
             # Import codegen modules
-            from pto_test.codegen.kernel_generator import KernelGenerator
-            from pto_test.codegen.orch_generator import OrchGenerator
             from pto_test.codegen.config_generator import ConfigGenerator
             from pto_test.codegen.golden_generator import GoldenGenerator
+            from pto_test.codegen.kernel_generator import KernelGenerator
+            from pto_test.codegen.orch_generator import OrchGenerator
 
             kernels_dir = work_dir / "kernels"
             kernels_dir.mkdir(parents=True, exist_ok=True)
@@ -148,9 +148,7 @@ class TestRunner:
             if orch_code is None:
                 # Auto-generate orchestration
                 orch_gen = OrchGenerator()
-                orch_code = orch_gen.generate(
-                    test_case.tensor_specs, kernel_configs
-                )
+                orch_code = orch_gen.generate(test_case.tensor_specs, kernel_configs)
 
             orch_path = orch_dir / "orch.cpp"
             orch_path.write_text(orch_code)
@@ -181,14 +179,14 @@ class TestRunner:
                             "func_id": k["func_id"],
                             "function_name": k.get("function_name", "unknown"),
                             "core_type": k["core_type"],
-                            "source": str(Path("kernels") / Path(k["source"]).relative_to(kernels_dir)),
+                            "source": str(
+                                Path("kernels") / Path(k["source"]).relative_to(kernels_dir)
+                            ),
                         }
                         for k in kernel_configs
                     ],
                 }
-                (work_dir / "metadata.json").write_text(
-                    json.dumps(metadata, indent=2, default=str)
-                )
+                (work_dir / "metadata.json").write_text(json.dumps(metadata, indent=2, default=str))
 
             # 6. Execute via CodeRunner (skip if codegen_only)
             if self.config.codegen_only:
@@ -199,9 +197,7 @@ class TestRunner:
                     execution_time=time.time() - start_time,
                 )
 
-            self._execute_with_code_runner(
-                kernels_dir, golden_path, test_name
-            )
+            self._execute_with_code_runner(kernels_dir, golden_path, test_name)
 
             return TestResult(
                 passed=True,
@@ -211,6 +207,7 @@ class TestRunner:
 
         except Exception as e:
             import traceback
+
             return TestResult(
                 passed=False,
                 test_name=test_name,

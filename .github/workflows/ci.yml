@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04]
+        python-version: ['3.9', '3.10']  # TODO: Re-enable 3.11 after fixing PyPTO TensorType API compatibility
+
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            ccache \
+            git
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy pytest pytest-xdist
+          pip install nanobind
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.python-version }}
+          max-size: 500M
+
+      - name: Build PyPTO and dependencies
+        run: |
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+          ./build_and_install.sh --clean --type RelWithDebInfo --jobs $(nproc)
+
+      - name: Source environment
+        run: |
+          source build/setup_env.sh
+          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
+          echo "PYPTO_DIR=$PYPTO_DIR" >> $GITHUB_ENV
+          echo "SIMPLER_DIR=$SIMPLER_DIR" >> $GITHUB_ENV
+
+      - name: Verify installation
+        run: |
+          python -c "import pypto; print(f'PyPTO version: {pypto.__version__}')"
+          python -c "import pto_compiler; print('Simpler modules accessible')"
+          python -c "import pto_test; print('pto-test imported successfully')"
+
+      # - name: Run tests (simulation mode)
+      #   run: |
+      #     pytest tests/ -v --tb=short --color=yes --platform=a2a3sim
+
+      - name: Run tests with code generation only
+        run: |
+          pytest tests/ -v --codegen-only --save-kernels
+
+      - name: Clean up test outputs on success
+        if: success()
+        run: |
+          rm -rf build/outputs/
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-outputs-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: build/outputs/
+          retention-days: 7
+
+      - name: Clean up test outputs on failure
+        if: failure()
+        run: |
+          rm -rf build/outputs/
+
+  lint:
+    name: Code Quality Checks
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install linting tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install black isort
+
+      - name: Check code formatting with black
+        run: |
+          black --check --diff src/ tests/
+
+      - name: Check import sorting with isort
+        run: |
+          isort --check-only --diff src/ tests/
+
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify README
+        run: |
+          if [ ! -f README.md ]; then
+            echo "README.md not found"
+            exit 1
+          fi
+          echo "README.md exists and is valid"

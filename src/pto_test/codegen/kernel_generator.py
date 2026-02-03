@@ -8,7 +8,7 @@ the PassManager and CceCodegen pipeline.
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 # Add pypto to path
 _FRAMEWORK_ROOT = Path(__file__).parent.parent.parent.parent
@@ -82,6 +82,7 @@ using namespace pto;
         """Lazily initialize CceCodegen."""
         if self._codegen is None:
             from pypto.pypto_core import codegen
+
             self._codegen = codegen.CceCodegen()
         return self._codegen
 
@@ -89,6 +90,7 @@ using namespace pto;
         """Lazily initialize PassManager."""
         if self._pass_manager is None:
             from pypto.ir.pass_manager import PassManager
+
             self._pass_manager = PassManager.get_strategy(self.strategy)
         return self._pass_manager
 
@@ -110,7 +112,7 @@ using namespace pto;
         """
         # Pattern: Match __aicore__ at the start of a line (possibly with leading whitespace)
         # and prepend 'extern "C" ' to it
-        pattern = r'^(\s*)(__aicore__\s+__attribute__\(\(always_inline\)\))'
+        pattern = r"^(\s*)(__aicore__\s+__attribute__\(\(always_inline\)\))"
         replacement = r'\1extern "C" \2'
         return re.sub(pattern, replacement, code, flags=re.MULTILINE)
 
@@ -157,17 +159,17 @@ using namespace pto;
             readable_name = None
 
             # Try multiple ways to extract the function name
-            if hasattr(func_name, 'name_hint'):
+            if hasattr(func_name, "name_hint"):
                 readable_name = func_name.name_hint
-            if not readable_name and hasattr(func_name, '__name__'):
+            if not readable_name and hasattr(func_name, "__name__"):
                 readable_name = func_name.__name__
-            if not readable_name and hasattr(func_name, 'name'):
+            if not readable_name and hasattr(func_name, "name"):
                 readable_name = func_name.name
 
             # Try to extract from the function object itself
-            if not readable_name and hasattr(func, 'name'):
+            if not readable_name and hasattr(func, "name"):
                 readable_name = func.name
-            if not readable_name and hasattr(func, 'name_hint'):
+            if not readable_name and hasattr(func, "name_hint"):
                 readable_name = func.name_hint
 
             # Generate C++ code first - it might contain the function name
@@ -177,8 +179,9 @@ using namespace pto;
             # Look for pattern like "void function_name(" or "__aicore__ void function_name("
             if not readable_name:
                 import re
+
                 # Match function definition: void name(...) or __aicore__ ... void name(...)
-                match = re.search(r'void\s+(\w+)\s*\(', code)
+                match = re.search(r"void\s+(\w+)\s*\(", code)
                 if match:
                     readable_name = match.group(1)
 
@@ -186,7 +189,7 @@ using namespace pto;
             if not readable_name:
                 func_str = str(func_name)
                 # Extract hex address from string like "<...object at 0xfffe612bc3d0>"
-                addr_match = re.search(r'0x[0-9a-fA-F]+', func_str)
+                addr_match = re.search(r"0x[0-9a-fA-F]+", func_str)
                 if addr_match:
                     addr = addr_match.group(0)
                     readable_name = f"func_{addr}"
@@ -203,12 +206,14 @@ using namespace pto;
             source_path = kernel_dir / f"{readable_name}.cpp"
             source_path.write_text(code_with_header)
 
-            kernels.append({
-                "func_id": func_id,
-                "source": str(source_path),
-                "core_type": self.core_type,
-                "function_name": readable_name,
-            })
+            kernels.append(
+                {
+                    "func_id": func_id,
+                    "source": str(source_path),
+                    "core_type": self.core_type,
+                    "function_name": readable_name,
+                }
+            )
 
         return kernels
 

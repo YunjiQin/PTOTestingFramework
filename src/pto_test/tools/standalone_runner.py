@@ -90,9 +90,7 @@ class StandaloneRunner:
             missing.append(str(orch_path))
 
         if missing:
-            raise ValueError(
-                f"Required files missing in {test_dir}:\n  " + "\n  ".join(missing)
-            )
+            raise ValueError(f"Required files missing in {test_dir}:\n  " + "\n  ".join(missing))
 
         # Check if orchestration contains TODO marker (not completed)
         orch_content = orch_path.read_text()

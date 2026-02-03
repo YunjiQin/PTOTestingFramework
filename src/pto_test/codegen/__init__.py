@@ -9,10 +9,10 @@ into the files required by simpler's CodeRunner:
 - golden_generator: PTOTestCase -> golden.py
 """
 
-from pto_test.codegen.kernel_generator import KernelGenerator
-from pto_test.codegen.orch_generator import OrchGenerator
 from pto_test.codegen.config_generator import ConfigGenerator
 from pto_test.codegen.golden_generator import GoldenGenerator
+from pto_test.codegen.kernel_generator import KernelGenerator
+from pto_test.codegen.orch_generator import OrchGenerator
 
 __all__ = [
     "KernelGenerator",
